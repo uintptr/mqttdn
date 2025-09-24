@@ -110,7 +110,7 @@ fn mqtt_loop(config: &Config) -> Result<()> {
         info!("connecting to {}", config.server.host);
 
         let mut options = MqttOptions::new("mqttdn", &config.server.host, 1883);
-        options.set_keep_alive(Duration::from_secs(5));
+        options.set_keep_alive(Duration::from_secs(30));
 
         let (client, mut connection) = Client::new(options, 10);
 
@@ -122,7 +122,7 @@ fn mqtt_loop(config: &Config) -> Result<()> {
         for event in connection.iter() {
             if let Err(e) = event {
                 error!("{e}");
-                return Err(Error::ConnectionFailure);
+                break;
             }
 
             if let Ok(Event::Incoming(Incoming::Publish(publish))) = event {
@@ -138,6 +138,8 @@ fn mqtt_loop(config: &Config) -> Result<()> {
                         continue;
                     }
                 };
+
+                info!("event topic={topic} payload={payload}");
 
                 for t in &config.topics {
                     if &t.topic == topic && t.payload == payload {
