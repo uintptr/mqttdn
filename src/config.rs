@@ -14,7 +14,7 @@ pub struct MQTTServer {
     pub host: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Debug, Deserialize)]
 pub struct MQTTTopic {
     pub topic: String,
     pub payload: String,
