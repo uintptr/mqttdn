@@ -103,48 +103,50 @@ fn process_topic(osd: &Osd, topic: &MQTTTopic, _payload: &str) {
     }
 }
 
-fn mqtt_loop(config: Config) -> Result<()> {
+fn mqtt_loop(config: &Config) -> Result<()> {
     let osd = Osd::new()?;
 
-    let mut options = MqttOptions::new("mqttdn", config.server.host, 1883);
-    options.set_keep_alive(Duration::from_secs(5));
+    loop {
+        info!("connecting to {}", config.server.host);
 
-    let (client, mut connection) = Client::new(options, 10);
+        let mut options = MqttOptions::new("mqttdn", &config.server.host, 1883);
+        options.set_keep_alive(Duration::from_secs(5));
 
-    for t in &config.topics {
-        info!("sub {}", t.topic);
-        client.subscribe(&t.topic, rumqttc::QoS::AtLeastOnce)?;
-    }
+        let (client, mut connection) = Client::new(options, 10);
 
-    for event in connection.iter() {
-        if let Err(e) = event {
-            error!("{e}");
-            return Err(Error::ConnectionFailure);
+        for t in &config.topics {
+            info!("sub {}", t.topic);
+            client.subscribe(&t.topic, rumqttc::QoS::AtLeastOnce)?;
         }
 
-        if let Ok(Event::Incoming(Incoming::Publish(publish))) = event {
-            if publish.payload.is_empty() {
-                continue;
+        for event in connection.iter() {
+            if let Err(e) = event {
+                error!("{e}");
+                return Err(Error::ConnectionFailure);
             }
 
-            let topic = &publish.topic;
-            let payload = match String::from_utf8(publish.payload.to_vec()) {
-                Ok(v) => v,
-                Err(e) => {
-                    error!("{e}");
+            if let Ok(Event::Incoming(Incoming::Publish(publish))) = event {
+                if publish.payload.is_empty() {
                     continue;
                 }
-            };
 
-            for t in &config.topics {
-                if &t.topic == topic && t.payload == payload {
-                    process_topic(&osd, t, &payload)
+                let topic = &publish.topic;
+                let payload = match String::from_utf8(publish.payload.to_vec()) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        error!("{e}");
+                        continue;
+                    }
+                };
+
+                for t in &config.topics {
+                    if &t.topic == topic && t.payload == payload {
+                        process_topic(&osd, t, &payload)
+                    }
                 }
             }
         }
     }
-
-    Ok(())
 }
 
 fn main() -> Result<()> {
@@ -182,7 +184,8 @@ fn main() -> Result<()> {
             printkv("Server", &config.server.host);
             printkv("Topics", config.topics.len());
             printkv("Verbose", args.verbose);
-            mqtt_loop(config)
+
+            mqtt_loop(&config)
         }
         Err(pidlock::PidlockError::LockExists) => Err(Error::AlreadyRunning),
         Err(e) => Err(e.into()),
