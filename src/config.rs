@@ -29,18 +29,20 @@ pub struct Config {
 }
 
 fn find_config() -> Result<PathBuf> {
+    //
+    // SxS
+    //
+    if let Ok(path) = find_file("config.toml") {
+        return Ok(path);
+    }
+
+    //
+    // config/config.toml
+    //
     let rel_path = Path::new("config").join("config.toml");
 
     if let Ok(path) = find_file(rel_path) {
         return Ok(path);
-    }
-
-    let home_dir = home::home_dir().ok_or(Error::HomeNotFound)?;
-
-    let home_config = home_dir.join(".config").join("mqttdn").join("config.toml");
-
-    if home_config.exists() {
-        return Ok(home_config);
     }
 
     Err(Error::ConfigFileNotFound)

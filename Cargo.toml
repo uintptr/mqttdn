@@ -6,7 +6,6 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.5.48", features = ["derive"] }
 derive_more = { version = "2.0.1", features = ["from"] }
-home = "0.5.11"
 log = "0.4.28"
 pidlock = "0.2.1"
 rstaples = "0.1.3"

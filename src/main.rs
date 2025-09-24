@@ -1,4 +1,4 @@
-use std::{fs, path::PathBuf, process::Command, time::Duration};
+use std::{env, path::PathBuf, process::Command, time::Duration};
 
 use log::{LevelFilter, error, info};
 use mqttdn::{
@@ -13,13 +13,11 @@ use clap::Parser;
 use rumqttc::{Client, Event, Incoming, MqttOptions};
 use which::which;
 
-const PID_FILE: &str = "~/.config/mqttdn/mqttdn.pid";
-
 #[derive(Parser, Debug)]
 struct UserArgs {
     /// pid file
-    #[arg(short, long, default_value=PID_FILE)]
-    pid_file: String,
+    #[arg(short, long)]
+    pid_file: Option<String>,
 
     /// log file
     #[arg(short, long)]
@@ -29,33 +27,15 @@ struct UserArgs {
     #[arg(short, long)]
     verbose: bool,
 }
-
-fn expand_tilde<S>(path: S) -> Result<PathBuf>
-where
-    S: AsRef<str>,
-{
-    let home = home::home_dir().ok_or(Error::HomeNotFound)?;
-
-    if path.as_ref().starts_with("~/") {
-        Ok(home.join(&path.as_ref()[2..]))
-    } else {
-        Ok(PathBuf::from(path.as_ref()))
+fn get_pid_file(args: &UserArgs) -> Result<PathBuf> {
+    match &args.pid_file {
+        Some(v) => Ok(PathBuf::from(v)),
+        None => {
+            let self_exe = env::current_exe()?;
+            let self_dir = self_exe.parent().ok_or(Error::ParentPathNotFound)?;
+            Ok(self_dir.join("mqttdn.pid"))
+        }
     }
-}
-
-fn init_pid_file<S>(pid_file: S) -> Result<PathBuf>
-where
-    S: AsRef<str>,
-{
-    let pid_path = expand_tilde(pid_file)?;
-
-    let pid_parent = pid_path.parent().ok_or(Error::ParentPathNotFound)?;
-
-    if !pid_parent.exists() {
-        fs::create_dir_all(pid_parent)?;
-    }
-
-    Ok(pid_path)
 }
 
 fn exec_command<S>(command: S) -> Result<()>
@@ -161,12 +141,12 @@ fn main() -> Result<()> {
 
     let logger = StaplesLogger::new().with_stderr().with_log_level(log_level);
 
-    match args.log_file {
+    match &args.log_file {
         Some(v) => logger.with_log_file(v).start()?,
         None => logger.start()?,
     }
 
-    let pid_file = init_pid_file(&args.pid_file)?;
+    let pid_file = get_pid_file(&args)?;
 
     let config = match Config::load() {
         Ok(v) => v,
