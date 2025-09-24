@@ -11,6 +11,7 @@ use rstaples::{logging::StaplesLogger, staples::printkv};
 
 use clap::Parser;
 use rumqttc::{Client, Event, Incoming, MqttOptions};
+use uuid::Uuid;
 use which::which;
 
 #[derive(Parser, Debug)]
@@ -87,9 +88,12 @@ fn mqtt_loop(config: &Config) -> Result<()> {
     let osd = Osd::new()?;
 
     loop {
-        info!("connecting to {}", config.server.host);
+        let uuid = Uuid::new_v4();
+        let instance = format!("mqttdn_{}", uuid);
 
-        let mut options = MqttOptions::new("mqttdn", &config.server.host, 1883);
+        info!("connecting to {} as {instance}", config.server.host);
+
+        let mut options = MqttOptions::new(instance, &config.server.host, 1883);
         options.set_keep_alive(Duration::from_secs(30));
 
         let (client, mut connection) = Client::new(options, 10);
