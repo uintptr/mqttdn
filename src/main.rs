@@ -1,5 +1,6 @@
-use std::{env, path::PathBuf, process::Command, time::Duration};
+use std::{env, fs, path::PathBuf, process::Command, time::Duration};
 
+use home::home_dir;
 use log::{LevelFilter, error, info};
 use mqttdn::{
     config::{Config, MQTTTopic},
@@ -32,15 +33,16 @@ struct UserArgs {
     #[arg(short, long)]
     verbose: bool,
 }
-fn get_pid_file(args: &UserArgs) -> Result<PathBuf> {
-    match &args.pid_file {
-        Some(v) => Ok(PathBuf::from(v)),
-        None => {
-            let self_exe = env::current_exe()?;
-            let self_dir = self_exe.parent().ok_or(Error::ParentPathNotFound)?;
-            Ok(self_dir.join("mqttdn.pid"))
-        }
+fn get_pid_file() -> Result<PathBuf> {
+    let user_home = home_dir().ok_or(Error::HomeNotFound)?;
+
+    let pid_dir = user_home.join(".local").join("share").join("mqttdn");
+
+    if !pid_dir.exists() {
+        fs::create_dir(&pid_dir)?;
     }
+
+    Ok(pid_dir.join("mqttdn.pid"))
 }
 
 fn exec_command<S>(command: S) -> Result<()>
@@ -154,7 +156,7 @@ fn main() -> Result<()> {
         None => logger.start()?,
     }
 
-    let pid_file = get_pid_file(&args)?;
+    let pid_file = get_pid_file()?;
 
     let config = match args.config_file {
         Some(v) => Config::from_file(v)?,
