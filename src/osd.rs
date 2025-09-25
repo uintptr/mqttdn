@@ -65,10 +65,10 @@ impl Osd {
             .stdin(Stdio::piped())
             .spawn()?;
 
-        if let Some(stdin) = child.stdin.as_mut() {
-            if let Err(e) = stdin.write_all(text.as_ref().as_bytes()) {
-                error!("{e}");
-            }
+        if let Some(stdin) = child.stdin.as_mut()
+            && let Err(e) = stdin.write_all(text.as_ref().as_bytes())
+        {
+            error!("{e}");
         }
 
         match child.wait() {

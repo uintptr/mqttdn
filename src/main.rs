@@ -1,4 +1,4 @@
-use std::{env, fs, path::PathBuf, process::Command, time::Duration};
+use std::{fs, path::PathBuf, process::Command, time::Duration};
 
 use home::home_dir;
 use log::{LevelFilter, error, info};
@@ -77,16 +77,16 @@ where
 // best effort
 //
 fn process_topic(osd: &Osd, topic: &MQTTTopic, _payload: &str) {
-    if let Some(command) = &topic.command {
-        if let Err(e) = exec_command(command) {
-            error!("{e}");
-        }
+    if let Some(command) = &topic.command
+        && let Err(e) = exec_command(command)
+    {
+        error!("{e}");
     }
 
-    if let Some(message) = &topic.osd {
-        if let Err(e) = osd.display(message) {
-            error!("{e}");
-        }
+    if let Some(message) = &topic.osd
+        && let Err(e) = osd.display(message)
+    {
+        error!("{e}");
     }
 }
 
