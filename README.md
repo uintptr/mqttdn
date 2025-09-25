@@ -20,6 +20,12 @@ MQTT Desktop Notification
 1758766556.483 :: INFO  :: mqttdn:126                                    event topic=/motion/driveway payload=enter
 ```
 
+## Install
+
+```
+cargo install --git https://github.com/uintptr/mqttdn
+```
+
 ## Requirements
 
 - `aosd_cat` for the On-Screen-Display (OSD) notifications

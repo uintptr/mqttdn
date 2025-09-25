@@ -51,14 +51,25 @@ fn find_config() -> Result<PathBuf> {
 }
 
 impl Config {
-    pub fn load() -> Result<Self> {
-        let config_file = find_config()?;
+    pub fn from_file<P>(file_path: P) -> Result<Self>
+    where
+        P: AsRef<Path>,
+    {
+        // so we can print the absolute path
+        let file_path = file_path.as_ref().canonicalize()?;
 
-        info!("config file: {}", config_file.display());
-        let config_data = fs::read_to_string(config_file)?;
+        info!("config file: {}", file_path.display());
+
+        let config_data = fs::read_to_string(file_path)?;
 
         let config: Config = toml::from_str(&config_data)?;
 
         Ok(config)
+    }
+
+    pub fn from_default() -> Result<Self> {
+        let config_file = find_config()?;
+
+        Config::from_file(config_file)
     }
 }

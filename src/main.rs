@@ -16,6 +16,10 @@ use which::which;
 
 #[derive(Parser, Debug)]
 struct UserArgs {
+    /// config file path
+    #[arg(short, long)]
+    config_file: Option<String>,
+
     /// pid file
     #[arg(short, long)]
     pid_file: Option<String>,
@@ -152,12 +156,9 @@ fn main() -> Result<()> {
 
     let pid_file = get_pid_file(&args)?;
 
-    let config = match Config::load() {
-        Ok(v) => v,
-        Err(e) => {
-            error!("{e}");
-            return Err(e);
-        }
+    let config = match args.config_file {
+        Some(v) => Config::from_file(v)?,
+        None => Config::from_default()?,
     };
 
     info!("pid={} exists={}", pid_file.display(), pid_file.exists());
