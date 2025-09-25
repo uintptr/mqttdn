@@ -1,0 +1,22 @@
+[server]
+host = "10.0.0.2"
+
+[[topics]]
+topic = "/motion/office"
+payload = "leave"
+command = "xset dpms force off"
+
+[[topics]]
+topic = "/motion/porch"
+payload = "enter"
+osd = "Motion Porch"
+
+[[topics]]
+topic = "/motion/driveway"
+payload = "enter"
+osd = "Motion Driveway"
+
+[[topics]]
+topic = "/motion/stairs"
+payload = "enter"
+osd = "Motion Stairs"
