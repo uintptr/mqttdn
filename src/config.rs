@@ -9,6 +9,8 @@ use serde::Deserialize;
 
 use crate::error::{Error, Result};
 
+const CONFIG_FILE_NAME: &str = "mqttdn.toml";
+
 #[derive(Deserialize)]
 pub struct MQTTServer {
     pub host: String,
@@ -32,14 +34,14 @@ fn find_config() -> Result<PathBuf> {
     //
     // SxS
     //
-    if let Ok(path) = find_file("config.toml") {
+    if let Ok(path) = find_file(CONFIG_FILE_NAME) {
         return Ok(path);
     }
 
     //
     // config/config.toml
     //
-    let rel_path = Path::new("config").join("config.toml");
+    let rel_path = Path::new("config").join(CONFIG_FILE_NAME);
 
     if let Ok(path) = find_file(rel_path) {
         return Ok(path);
