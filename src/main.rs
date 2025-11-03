@@ -152,8 +152,8 @@ fn main() -> Result<()> {
     let logger = StaplesLogger::new().with_stderr().with_log_level(log_level);
 
     match &args.log_file {
-        Some(v) => logger.with_log_file(v).start()?,
-        None => logger.start()?,
+        Some(v) => logger.with_log_file(v).start(),
+        None => logger.start(),
     }
 
     let pid_file = get_pid_file()?;
