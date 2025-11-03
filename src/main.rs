@@ -1,6 +1,6 @@
-use std::{fs, path::PathBuf, process::Command, time::Duration};
+use std::{path::PathBuf, process::Command, time::Duration};
 
-use home::home_dir;
+use directories::ProjectDirs;
 use log::{LevelFilter, error, info};
 use mqttdn::{
     config::{Config, MQTTTopic},
@@ -33,16 +33,9 @@ struct UserArgs {
     #[arg(short, long)]
     verbose: bool,
 }
-fn get_pid_file() -> Result<PathBuf> {
-    let user_home = home_dir().ok_or(Error::HomeNotFound)?;
 
-    let pid_dir = user_home.join(".local").join("share").join("mqttdn");
-
-    if !pid_dir.exists() {
-        fs::create_dir(&pid_dir)?;
-    }
-
-    Ok(pid_dir.join("mqttdn.pid"))
+fn get_pid_file(dirs: &ProjectDirs) -> PathBuf {
+    dirs.data_local_dir().join("mqttdn.pid")
 }
 
 fn exec_command<S>(command: S) -> Result<()>
@@ -156,11 +149,13 @@ fn main() -> Result<()> {
         None => logger.start(),
     }
 
-    let pid_file = get_pid_file()?;
+    let projdir = ProjectDirs::from("com", "acme", "mqttdn").ok_or(Error::HomeNotFound)?;
+
+    let pid_file = get_pid_file(&projdir);
 
     let config = match args.config_file {
         Some(v) => Config::from_file(v)?,
-        None => Config::from_default()?,
+        None => Config::from_default(&projdir)?,
     };
 
     info!("pid={} exists={}", pid_file.display(), pid_file.exists());
