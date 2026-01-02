@@ -8,7 +8,7 @@ use mqttdn::{
     osd::Osd,
 };
 use pidlock::Pidlock;
-use rstaples::{logging::StaplesLogger, staples::printkv};
+use rstaples::{display::printkv, logging::StaplesLogger};
 
 use clap::Parser;
 use rumqttc::{Client, Event, Incoming, MqttOptions};
