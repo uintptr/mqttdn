@@ -1,10 +1,9 @@
 use std::{fs, path::Path};
 
+use anyhow::Result;
 use directories::ProjectDirs;
 use log::info;
 use serde::Deserialize;
-
-use crate::error::Result;
 
 const CONFIG_FILE_NAME: &str = "mqttdn.toml";
 

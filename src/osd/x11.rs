@@ -15,7 +15,7 @@ const OSD_TEXT_COLOR: &str = "white";
 const DEFAULT_WIDTH: i32 = 3840;
 const DEFAULT_HEIGHT: i32 = 2160;
 
-pub struct Osd {
+pub struct X11Osd {
     program: PathBuf,
     text_size: i32,
     text_color: String,
@@ -25,7 +25,7 @@ fn get_dimention() -> (i32, i32) {
     (DEFAULT_WIDTH, DEFAULT_HEIGHT)
 }
 
-impl Osd {
+impl X11Osd {
     pub fn new() -> Result<Self> {
         let program = match which(OSD_PROGRAM_NAME) {
             Ok(v) => v,

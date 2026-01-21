@@ -1,11 +1,11 @@
 use std::{path::PathBuf, process::Command, time::Duration};
 
+use anyhow::{Result, anyhow, bail};
 use directories::ProjectDirs;
 use log::{LevelFilter, error, info};
 use mqttdn::{
     config::{Config, MQTTTopic},
-    error::{Error, Result},
-    osd::Osd,
+    osd::{Osd, OsdTrait},
 };
 use pidlock::Pidlock;
 use rstaples::{display::printkv, logging::StaplesLogger};
@@ -45,14 +45,14 @@ where
     let words = shell_words::split(command.as_ref())?;
 
     if words.is_empty() {
-        return Err(Error::CommandNotFound);
+        bail!("command not found")
     }
 
     info!("executing {}", command.as_ref());
 
     let program = match which(&words[0]) {
         Ok(v) => v,
-        Err(_) => return Err(Error::ProgramNotFound),
+        Err(_) => bail!("{} was not found", &words[0]),
     };
 
     let mut child = Command::new(program).args(&words[1..]).spawn()?;
@@ -60,7 +60,7 @@ where
     match child.wait() {
         Ok(exit) => match exit.success() {
             true => Ok(()),
-            false => Err(Error::ExecFailure),
+            false => bail!("{} failed", command.as_ref()),
         },
         Err(e) => Err(e.into()),
     }
@@ -69,7 +69,10 @@ where
 //
 // best effort
 //
-fn process_topic(osd: &Osd, topic: &MQTTTopic, _payload: &str) {
+fn process_topic<O>(osd: &O, topic: &MQTTTopic, _payload: &str)
+where
+    O: OsdTrait,
+{
     if let Some(command) = &topic.command
         && let Err(e) = exec_command(command)
     {
@@ -149,7 +152,8 @@ fn main() -> Result<()> {
         None => logger.start(),
     }
 
-    let projdir = ProjectDirs::from("com", "acme", "mqttdn").ok_or(Error::HomeNotFound)?;
+    let projdir = ProjectDirs::from("com", "acme", "mqttdn")
+        .ok_or_else(|| anyhow!("project dir not found"))?;
 
     let pid_file = get_pid_file(&projdir);
 
@@ -171,7 +175,7 @@ fn main() -> Result<()> {
 
             mqtt_loop(&config)
         }
-        Err(pidlock::PidlockError::LockExists) => Err(Error::AlreadyRunning),
+        Err(pidlock::PidlockError::LockExists) => bail!("Already running"),
         Err(e) => Err(e.into()),
     }
 }
