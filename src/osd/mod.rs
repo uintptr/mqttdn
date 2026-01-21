@@ -4,7 +4,7 @@
 #[cfg(target_os = "macos")]
 mod macos;
 use anyhow::Result;
-//#[cfg(target_os = "macos")]
+#[cfg(target_os = "macos")]
 pub use macos::MacOsd as Osd;
 
 //

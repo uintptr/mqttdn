@@ -4,10 +4,11 @@ use std::{
     process::{Command, Stdio},
 };
 
+use anyhow::{Result, anyhow, bail};
 use log::error;
 use which::which;
 
-use crate::error::{Error, Result};
+use crate::osd::OsdTrait;
 
 const OSD_PROGRAM_NAME: &str = "aosd_cat";
 const OSD_TEXT_SIZE: i32 = 90;
@@ -25,13 +26,13 @@ fn get_dimention() -> (i32, i32) {
     (DEFAULT_WIDTH, DEFAULT_HEIGHT)
 }
 
-impl X11Osd {
-    pub fn new() -> Result<Self> {
+impl OsdTrait for X11Osd {
+    fn new() -> Result<Self> {
         let program = match which(OSD_PROGRAM_NAME) {
             Ok(v) => v,
             Err(_) => {
                 error!("{OSD_PROGRAM_NAME} was not found in PATH");
-                return Err(Error::ProgramNotFound);
+                bail!("{OSD_PROGRAM_NAME} was not found in PATH");
             }
         };
 
@@ -42,7 +43,7 @@ impl X11Osd {
         })
     }
 
-    pub fn display<S>(&self, text: S) -> Result<()>
+    fn display<S>(&self, text: S) -> Result<()>
     where
         S: AsRef<str>,
     {
@@ -74,7 +75,7 @@ impl X11Osd {
         match child.wait() {
             Ok(exit) => match exit.success() {
                 true => Ok(()),
-                false => Err(Error::ExecFailure),
+                false => Err(anyhow!("exec failure")),
             },
             Err(e) => Err(e.into()),
         }
